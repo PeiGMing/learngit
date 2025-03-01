@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cabo Scoreboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            display: flex;
+            width: 80%;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .scoreboard {
+            width: 30%;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        .player-score {
+            margin: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .player-name {
+            margin-right: 10px;
+        }
+
+        input {
+            margin: 5px;
+            padding: 5px;
+            text-align: center;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px;
+        }
+
+        .loser {
+            background-color: #ffcccc;
+        }
+
+        .round-scores {
+            width: 70%;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="scoreboard">
+            <h1>Cabo Scoreboard</h1>
+            <div id="gameInfo">
+                <p id="currentGame">Game: 1 | Round: 0</p>
+            </div>
+            <div id="playerList">
+                <!-- Player input and score containers will be added here by JavaScript -->
+            </div>
+            <div id="addPlayerControls">
+                <input type="text" id="newPlayerName" placeholder="Enter player name">
+                <button onclick="addPlayer()">Add Player</button>
+            </div>
+            <div>
+                <button onclick="finishRound()">Finish Round</button>
+                <button onclick="restartGame()" class="hidden" id="restartGameBtn">Restart Game</button>
+            </div>
+            <div>
+                <button onclick="checkLosers()">Check for Losers</button>
+            </div>
+        </div>
+        <div class="round-scores" id="roundScoresHistory">
+            <!-- Round scores history will be displayed here -->
+        </div>
+    </div>
+    <script>
+        let players = {};
+        let currentGame = 1;
+        let gameActive = true;
+        let roundCount = 0;
+        let currentTable;
+
+        function addPlayer() {
+            if (gameActive) {
+                const playerList = document.getElementById('playerList');
+                const newPlayerName = document.getElementById('newPlayerName').value.trim();
+                if (newPlayerName && !players.hasOwnProperty(newPlayerName)) {
+                    players[newPlayerName] = 0;
+                    const playerDiv = document.createElement('div');
+                    playerDiv.classList.add('player-score');
+                    const playerNameSpan = document.createElement('span');
+                    playerNameSpan.classList.add('player-name');
+                    playerNameSpan.textContent = newPlayerName;
+                    const scoreInput = document.createElement('input');
+                    scoreInput.type = 'number';
+                    scoreInput.min = '0';
+                    scoreInput.id = 'input_' + newPlayerName;
+                    scoreInput.name = newPlayerName;
+                    playerDiv.appendChild(playerNameSpan);
+                    playerDiv.appendChild(scoreInput);
+                    playerDiv.appendChild(document.createTextNode(' - Total: '));
+                    const totalScoreSpan = document.createElement('span');
+                    totalScoreSpan.textContent = '0';
+                    totalScoreSpan.id = 'total_' + newPlayerName;
+                    playerDiv.appendChild(totalScoreSpan);
+                    playerList.appendChild(playerDiv);
+                    document.getElementById('newPlayerName').value = ''; // Clear input after adding
+                } else {
+                    alert('Please enter a unique player name or wait until the round starts.');
+                }
+            } else {
+                alert('Cannot add players once the round has started.');
+            }
+        }
+
+        function finishRound() {
+            const roundScoresContainer = document.getElementById('roundScoresHistory');
+            if (!currentTable) {
+                currentTable = createGameTable();
+            }
+
+            const roundRow = currentTable.querySelector('tbody').insertRow();
+            roundRow.insertCell(0).textContent = `Round ${++roundCount}`;
+
+            for (const playerName in players) {
+                const scoreInput = document.getElementById('input_' + playerName);
+                const roundScore = parseInt(scoreInput.value) || 0;
+                players[playerName] += roundScore;
+                document.getElementById('total_' + playerName).textContent = players[playerName];
+                const scoreCell = roundRow.insertCell();
+                scoreCell.textContent = roundScore;
+            }
+
+            // Update total scores
+            updateTotalScores();
+
+            updateGameInfo();
+
+            gameActive = false;
+            document.getElementById('addPlayerControls').classList.add('hidden');
+            document.getElementById('restartGameBtn').classList.remove('hidden');
+        }
+
+        function createGameTable() {
+            const roundScoresContainer = document.getElementById('roundScoresHistory');
+            const gameTable = document.createElement('table');
+            gameTable.innerHTML = `
+                <thead>
+                    <tr><th colspan="${Object.keys(players).length + 1}">Game ${currentGame}</th></tr>
+                    <tr><th>Round</th>${Object.keys(players).map(name => `<th>${name}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+            `;
+            roundScoresContainer.appendChild(gameTable);
+            return gameTable;
+        }
+
+        function updateTotalScores() {
+            const tbody = currentTable.querySelector('tbody');
+            // Remove all rows after the last round score row
+            console.log(tbody.rows.length)
+            console.log(roundCount)
+            while (tbody.rows.length > roundCount) {
+                tbody.deleteRow(tbody.rows.length - 2);
+            }
+
+            // Insert a new total row
+            const totalRow = tbody.insertRow();
+            totalRow.insertCell(0).textContent = "Total";
+            for (const playerName in players) {
+                const totalCell = totalRow.insertCell();
+                totalCell.textContent = players[playerName];
+            }
+        }
+
+        function updateGameInfo() {
+            document.getElementById('currentGame').textContent = `Game: ${currentGame} | Round: ${roundCount + 1}`;
+        }
+
+        function restartGame() {
+            // Increment game number
+            currentGame++;
+            roundCount = 0;
+
+            // Reset scores
+            for (const playerName in players) {
+                players[playerName] = 0;
+                document.getElementById('total_' + playerName).textContent = '0';
+                document.getElementById('input_' + playerName).value = '0';
+                document.getElementById('input_' + playerName).classList.remove('loser');
+            }
+
+            // Update game info
+            updateGameInfo();
+
+            // Reset UI
+            document.getElementById('addPlayerControls').classList.remove('hidden');
+            document.getElementById('restartGameBtn').classList.add('hidden');
+            gameActive = true;
+            currentTable = null;
+        }
+
+        function checkLosers() {
+            const losingScore = 100; // Define the losing score
+            for (const playerName in players) {
+                if (players[playerName] >= losingScore) {
+                    document.getElementById('input_' + playerName).classList.add('loser');
+                } else {
+                    document.getElementById('input_' + playerName).classList.remove('loser');
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
