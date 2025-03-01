@@ -1,83 +1,73 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cabo 计分板</title>
+    <title>Cabo Scoreboard</title>
     <style>
         body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f0f0f0;
-            backdrop-filter: blur(8px);
-            /* 稍微降低模糊效果，提高可读性 */
+            /* background-color: #f0f0f0; */
+            background-image: url("bg.jpg");
+            backdrop-filter: blur(6px);
         }
 
         .container {
             display: flex;
             width: 80%;
-            max-width: 1200px;
-            /* 限制最大宽度，防止在大屏幕上过于拉伸 */
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            /* 降低阴影强度，更加细腻 */
-            overflow: hidden;
+            color: #ffffff;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 8%);
+            backdrop-filter: blur(6px);
+
         }
 
-        .scoreboard,
-        .round-scores {
-            padding: 25px;
-            background-color: #fff;
-            /* 更亮的背景色 */
-            border-radius: 15px;
+        .scoreboard {
+            width: 30%;
+            padding: 20px;
+            background-color: #070707a6;
+            backdrop-filter: blur(20px);
+            border-radius: 10px;
         }
 
         .player-score {
-            margin: 10px 0;
+            margin: 10px;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
         }
 
         .player-name {
             margin-right: 10px;
-            font-weight: bold;
-            color: #333;
-            /* 深灰色，提高对比度 */
         }
 
-        input,
-        button {
-            border-radius: 8px;
-            /* 圆角更大，更现代 */
-            border: 1px solid #ccc;
-            padding: 10px;
+        input {
             margin: 5px;
-            transition: all 0.3s ease;
+            padding: 5px;
+            text-align: center;
         }
 
         button {
-            background-color: #007AFF;
-            /* 苹果蓝 */
-            color: white;
-            border: none;
-        }
-
-        button:hover {
-            background-color: #0051BA;
-            /* 深色蓝，鼠标悬浮时 */
+            margin: 5px;
+            padding: 10px;
+            border-radius: 10px;
         }
 
         .loser {
-            background-color: #FF4F4F;
-            /* 红色，更加醒目 */
-            color: white;
+            background-color: #ffcccc;
+        }
+
+        .round-scores {
+            width: 70%;
+            padding: 20px;
+            /* background-color: #fcfcfc8f; */
         }
 
         table {
@@ -88,42 +78,33 @@
 
         th,
         td {
-            border: 1px solid #E1E1E1;
-            /* 浅色边框 */
-            padding: 12px;
+            border: 1px solid #000;
+            padding: 8px;
             text-align: center;
-            background-color: #fff;
-            /* 白色背景 */
         }
 
         th {
-            background-color: #F2F2F2;
-            /* 表头背景色 */
-            font-weight: bold;
-            color: #333;
+            background-color: #f2f2f2;
         }
 
         .hidden {
             display: none;
         }
 
-        .near-loser {
-            background-color: #FFC700;
-            /* 金色，用于接近输家的警告 */
-            color: black;
+        .controls {
+            margin-bottom: 20px;
         }
 
-        /* 增加一些动画效果 */
-        @keyframes flash {
+        .control-group {
+            margin: 10px 0;
+        }
 
-            0%,
-            100% {
-                opacity: 1;
-            }
+        .control-label {
+            margin-right: 10px;
+        }
 
-            50% {
-                opacity: 0.5;
-            }
+        .rules {
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -131,27 +112,45 @@
 <body>
     <div class="container">
         <div class="scoreboard">
-            <h1>Cabo 计分板</h1>
+            <h1>Cabo Scoreboard</h1>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="newPlayerName">Add Player:</label>
+                    <input type="text" id="newPlayerName" placeholder="Enter player name">
+                    <button onclick="addPlayer()">Add Player</button>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="losingScore">Losing Score:</label>
+                    <select id="losingScore">
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <input type="checkbox" id="rule1">
+                    <label for="rule1">Round total of 50 counts as 0</label>
+                </div>
+                <div class="control-group">
+                    <input type="checkbox" id="rule2">
+                    <label for="rule2">Reset total to 0 if it matches losing score</label>
+                </div>
+            </div>
             <div id="gameInfo">
-                <p id="currentGame">游戏：1 | 回合：0</p>
+                <p id="currentGame">Game: 1 | Round: 0</p>
             </div>
             <div id="playerList">
-                <!-- 玩家输入和得分容器将由 JavaScript 在这里添加 -->
-            </div>
-            <div id="addPlayerControls">
-                <input type="text" id="newPlayerName" placeholder="输入玩家名称">
-                <button onclick="addPlayer()">添加玩家</button>
+                <!-- Player input and score containers will be added here by JavaScript -->
             </div>
             <div>
-                <button onclick="finishRound()">结束回合</button>
-                <button onclick="restartGame()" class="hidden" id="restartGameBtn">重新开始游戏</button>
+                <button onclick="finishRound()">Finish Round</button>
+                <button onclick="restartGame()" id="restartGameBtn">Restart Game</button>
             </div>
             <div>
-                <button onclick="checkLosers()">检查输家</button>
+                <button onclick="checkLosers()">Check for Losers</button>
             </div>
         </div>
         <div class="round-scores" id="roundScoresHistory">
-            <!-- 回合得分历史将在这里显示 -->
+            <!-- Round scores history will be displayed here -->
         </div>
     </div>
     <script>
@@ -160,6 +159,11 @@
         let gameActive = true;
         let roundCount = 0;
         let currentTable;
+        let losingScore = 100;
+        let rules = {
+            rule1: false,
+            rule2: false
+        };
 
         function addPlayer() {
             if (gameActive) {
@@ -179,18 +183,18 @@
                     scoreInput.name = newPlayerName;
                     playerDiv.appendChild(playerNameSpan);
                     playerDiv.appendChild(scoreInput);
-                    playerDiv.appendChild(document.createTextNode(' - 总分：'));
+                    playerDiv.appendChild(document.createTextNode(' - Total: '));
                     const totalScoreSpan = document.createElement('span');
                     totalScoreSpan.textContent = '0';
                     totalScoreSpan.id = 'total_' + newPlayerName;
                     playerDiv.appendChild(totalScoreSpan);
                     playerList.appendChild(playerDiv);
-                    document.getElementById('newPlayerName').value = ''; // 添加后清空输入
+                    document.getElementById('newPlayerName').value = ''; // Clear input after adding
                 } else {
-                    alert('请输入一个唯一的玩家名称或等到回合开始。');
+                    alert('Please enter a unique player name or wait until the round starts.');
                 }
             } else {
-                alert('一旦回合开始，就不能添加玩家了。');
+                alert('Cannot add players once the round has started.');
             }
         }
 
@@ -201,7 +205,7 @@
             }
 
             const roundRow = currentTable.querySelector('tbody').insertRow();
-            roundRow.insertCell(0).textContent = `回合 ${++roundCount}`;
+            roundRow.insertCell(0).textContent = `Round ${++roundCount}`;
 
             for (const playerName in players) {
                 const scoreInput = document.getElementById('input_' + playerName);
@@ -212,7 +216,7 @@
                 scoreCell.textContent = roundScore;
             }
 
-            // 更新总分
+            // Update total scores
             updateTotalScores();
 
             updateGameInfo();
@@ -227,8 +231,8 @@
             const gameTable = document.createElement('table');
             gameTable.innerHTML = `
                 <thead>
-                    <tr><th colspan="${Object.keys(players).length + 1}">游戏 ${currentGame}</th></tr>
-                    <tr><th>回合</th>${Object.keys(players).map(name => `<th>${name}</th>`).join('')}</tr>
+                    <tr><th colspan="${Object.keys(players).length + 1}">Game ${currentGame}</th></tr>
+                    <tr><th>Round</th>${Object.keys(players).map(name => `<th>${name}</th>`).join('')}</tr>
                 </thead>
                 <tbody>
             `;
@@ -238,14 +242,11 @@
 
         function updateTotalScores() {
             const tbody = currentTable.querySelector('tbody');
-
             while (tbody.rows.length > roundCount) {
                 tbody.deleteRow(tbody.rows.length - 2);
             }
-
-            // 插入新的总分行
             const totalRow = tbody.insertRow();
-            totalRow.insertCell(0).textContent = "总分";
+            totalRow.insertCell(0).textContent = "Total";
             for (const playerName in players) {
                 const totalCell = totalRow.insertCell();
                 totalCell.textContent = players[playerName];
@@ -253,59 +254,62 @@
         }
 
         function updateGameInfo() {
-            document.getElementById('currentGame').textContent = `游戏：${currentGame} | 回合：${roundCount}`;
+            document.getElementById('currentGame').textContent = `Game: ${currentGame} | Round: ${roundCount}`;
         }
 
         function restartGame() {
-            // 增加游戏编号
+            // Reset game state
             currentGame++;
             roundCount = 0;
+            gameActive = true;
 
-            // 重置得分
+            // Reset scores
             for (const playerName in players) {
                 players[playerName] = 0;
                 document.getElementById('total_' + playerName).textContent = '0';
-                document.getElementById('input_' + playerName).value = '0';
-                document.getElementById('input_' + playerName).classList.remove('loser');
-                document.getElementById('input_' + playerName).style.animation = '';
+                document.getElementById('input_' + playerName).value = '';
             }
 
-            // 更新游戏信息
-            updateGameInfo();
+            // Clear round info
+            document.getElementById('currentGame').textContent = `Game: ${currentGame} | Round: ${roundCount}`;
 
-            // 重置界面
+            // Create a new table for the new game
+            currentTable = null;
+
+            // Show add player controls and hide restart button
             document.getElementById('addPlayerControls').classList.remove('hidden');
             document.getElementById('restartGameBtn').classList.add('hidden');
-            gameActive = true;
-            currentTable = null;
         }
 
         function checkLosers() {
-            const losingScore = 100;
+            const losingScoreValue = parseInt(document.getElementById('losingScore').value);
             for (const playerName in players) {
-                if (players[playerName] >= losingScore) {
-                    const inputElement = document.getElementById('input_' + playerName);
-                    inputElement.classList.add('loser');
-                    // 闪烁效果
-                    inputElement.addEventListener('animationend', () => {
-                        inputElement.classList.remove('loser');
-                    });
-                    inputElement.style.animation = 'flash 1s infinite';
+                if (players[playerName] >= losingScoreValue) {
+                    document.getElementById('input_' + playerName).classList.add('loser');
                 } else {
                     document.getElementById('input_' + playerName).classList.remove('loser');
                 }
             }
         }
 
-        // 定义闪烁动画
-        const styleSheet = document.createElement('style');
-        styleSheet.type = 'text/css';
-        styleSheet.innerHTML = `
-        @keyframes flash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }`;
-        document.head.appendChild(styleSheet);
+        // Event listeners for the new rule controls
+        document.getElementById('losingScore').addEventListener('change', function () {
+            losingScore = parseInt(this.value);
+        });
+        document.getElementById('rule1').addEventListener('change', function () {
+            rules.rule1 = this.checked;
+        });
+
+        document.getElementById('rule2').addEventListener('change', function () {
+            rules.rule2 = this.checked;
+        });
+
+        // Make sure to initialize the losing score and rules when the page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            losingScore = parseInt(document.getElementById('losingScore').value);
+            rules.rule1 = document.getElementById('rule1').checked;
+            rules.rule2 = document.getElementById('rule2').checked;
+        }); z
     </script>
 </body>
 
