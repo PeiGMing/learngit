@@ -13,21 +13,27 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f0f0f0;
+            /* background-color: #f0f0f0; */
+            background-image: url("bg.jpg");
+            backdrop-filter: blur(6px);
         }
 
         .container {
             display: flex;
             width: 80%;
-            background-color: #fff;
+            color: #ffffff;
+            background-color: rgba(0, 0, 0, 0.2);
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 8%);
+            backdrop-filter: blur(6px);
+
         }
 
         .scoreboard {
             width: 30%;
             padding: 20px;
-            background-color: #f9f9f9;
+            background-color: #070707a6;
+            backdrop-filter: blur(20px);
             border-radius: 10px;
         }
 
@@ -51,6 +57,7 @@
         button {
             margin: 5px;
             padding: 10px;
+            border-radius: 10px;
         }
 
         .loser {
@@ -60,6 +67,7 @@
         .round-scores {
             width: 70%;
             padding: 20px;
+            /* background-color: #fcfcfc8f; */
         }
 
         table {
@@ -82,6 +90,22 @@
         .hidden {
             display: none;
         }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            margin: 10px 0;
+        }
+
+        .control-label {
+            margin-right: 10px;
+        }
+
+        .rules {
+            margin-top: 20px;
+        }
     </style>
 </head>
 
@@ -89,19 +113,37 @@
     <div class="container">
         <div class="scoreboard">
             <h1>Cabo Scoreboard</h1>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="newPlayerName">Add Player:</label>
+                    <input type="text" id="newPlayerName" placeholder="Enter player name">
+                    <button onclick="addPlayer()">Add Player</button>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="losingScore">Losing Score:</label>
+                    <select id="losingScore">
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <input type="checkbox" id="rule1">
+                    <label for="rule1">Round total of 50 counts as 0</label>
+                </div>
+                <div class="control-group">
+                    <input type="checkbox" id="rule2">
+                    <label for="rule2">Reset total to 0 if it matches losing score</label>
+                </div>
+            </div>
             <div id="gameInfo">
                 <p id="currentGame">Game: 1 | Round: 0</p>
             </div>
             <div id="playerList">
                 <!-- Player input and score containers will be added here by JavaScript -->
             </div>
-            <div id="addPlayerControls">
-                <input type="text" id="newPlayerName" placeholder="Enter player name">
-                <button onclick="addPlayer()">Add Player</button>
-            </div>
             <div>
                 <button onclick="finishRound()">Finish Round</button>
-                <button onclick="restartGame()" class="hidden" id="restartGameBtn">Restart Game</button>
+                <button onclick="restartGame()" id="restartGameBtn">Restart Game</button>
             </div>
             <div>
                 <button onclick="checkLosers()">Check for Losers</button>
@@ -117,6 +159,11 @@
         let gameActive = true;
         let roundCount = 0;
         let currentTable;
+        let losingScore = 100;
+        let rules = {
+            rule1: false,
+            rule2: false
+        };
 
         function addPlayer() {
             if (gameActive) {
@@ -195,14 +242,9 @@
 
         function updateTotalScores() {
             const tbody = currentTable.querySelector('tbody');
-            // Remove all rows after the last round score row
-            console.log(tbody.rows.length)
-            console.log(roundCount)
             while (tbody.rows.length > roundCount) {
                 tbody.deleteRow(tbody.rows.length - 2);
             }
-
-            // Insert a new total row
             const totalRow = tbody.insertRow();
             totalRow.insertCell(0).textContent = "Total";
             for (const playerName in players) {
@@ -212,42 +254,62 @@
         }
 
         function updateGameInfo() {
-            document.getElementById('currentGame').textContent = `Game: ${currentGame} | Round: ${roundCount + 1}`;
+            document.getElementById('currentGame').textContent = `Game: ${currentGame} | Round: ${roundCount}`;
         }
 
         function restartGame() {
-            // Increment game number
+            // Reset game state
             currentGame++;
             roundCount = 0;
+            gameActive = true;
 
             // Reset scores
             for (const playerName in players) {
                 players[playerName] = 0;
                 document.getElementById('total_' + playerName).textContent = '0';
-                document.getElementById('input_' + playerName).value = '0';
-                document.getElementById('input_' + playerName).classList.remove('loser');
+                document.getElementById('input_' + playerName).value = '';
             }
 
-            // Update game info
-            updateGameInfo();
+            // Clear round info
+            document.getElementById('currentGame').textContent = `Game: ${currentGame} | Round: ${roundCount}`;
 
-            // Reset UI
+            // Create a new table for the new game
+            currentTable = null;
+
+            // Show add player controls and hide restart button
             document.getElementById('addPlayerControls').classList.remove('hidden');
             document.getElementById('restartGameBtn').classList.add('hidden');
-            gameActive = true;
-            currentTable = null;
         }
 
         function checkLosers() {
-            const losingScore = 100; // Define the losing score
+            const losingScoreValue = parseInt(document.getElementById('losingScore').value);
             for (const playerName in players) {
-                if (players[playerName] >= losingScore) {
+                if (players[playerName] >= losingScoreValue) {
                     document.getElementById('input_' + playerName).classList.add('loser');
                 } else {
                     document.getElementById('input_' + playerName).classList.remove('loser');
                 }
             }
         }
+
+        // Event listeners for the new rule controls
+        document.getElementById('losingScore').addEventListener('change', function () {
+            losingScore = parseInt(this.value);
+        });
+        document.getElementById('rule1').addEventListener('change', function () {
+            rules.rule1 = this.checked;
+        });
+
+        document.getElementById('rule2').addEventListener('change', function () {
+            rules.rule2 = this.checked;
+        });
+
+        // Make sure to initialize the losing score and rules when the page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            losingScore = parseInt(document.getElementById('losingScore').value);
+            rules.rule1 = document.getElementById('rule1').checked;
+            rules.rule2 = document.getElementById('rule2').checked;
+        }); z
     </script>
 </body>
 
